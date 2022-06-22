@@ -22,6 +22,12 @@ class DropdownEditingController<T> extends ChangeNotifier {
 
 /// Create a dropdown form field
 class DropdownFormField<T> extends StatefulWidget {
+  final double elevation;
+
+  final BorderRadius? borderRadius;
+
+  final Color cursorColor;
+
   final bool autoFocus;
 
   /// It will trigger on user search
@@ -56,7 +62,7 @@ class DropdownFormField<T> extends StatefulWidget {
   final InputDecoration? decoration;
   final Color? dropdownColor;
   final DropdownEditingController<T>? controller;
-  final void Function(T item)? onChanged;
+  final ValueChanged<T?>? onChanged;
   final void Function(T?)? onSaved;
   final String? Function(T?)? validator;
 
@@ -89,11 +95,14 @@ class DropdownFormField<T> extends StatefulWidget {
     this.onChanged,
     this.onSaved,
     this.dropdownHeight,
-    this.searchTextStyle,
+    this.searchTextStyle = const TextStyle(fontSize: 14, color: Colors.black),
     this.emptyText = "No matching found!",
     this.emptyActionText = 'Create new',
     this.onEmptyActionPressed,
     this.selectedFn,
+    this.cursorColor = Colors.black,
+    this.elevation = 8.0,
+    this.borderRadius,
   }) : super(key: key);
 
   @override
@@ -191,16 +200,16 @@ class DropdownFormFieldState<T> extends State<DropdownFormField>
               return InputDecorator(
                 decoration: widget.decoration ??
                     InputDecoration(
-                      border: UnderlineInputBorder(),
+                      border: const OutlineInputBorder(),
                       suffixIcon: Icon(Icons.arrow_drop_down),
                     ),
                 isEmpty: _isEmpty,
                 isFocused: _isFocused,
                 child: this._overlayEntry != null
                     ? EditableText(
-                        style: TextStyle(fontSize: 16, color: Colors.black87),
+                        style: widget.searchTextStyle!,
                         controller: _searchTextController,
-                        cursorColor: Colors.black87,
+                        cursorColor: widget.cursorColor,
                         focusNode: _searchFocusNode,
                         backgroundCursorColor: Colors.transparent,
                         onChanged: (str) {
@@ -239,67 +248,70 @@ class DropdownFormFieldState<T> extends State<DropdownFormField>
           link: this._layerLink,
           showWhenUnlinked: false,
           offset: Offset(0.0, size.height + 3.0),
-          child: Material(
-              elevation: 4.0,
-              child: SizedBox(
-                height: widget.dropdownHeight ?? 240,
-                child: Container(
-                    color: widget.dropdownColor ?? Colors.white70,
-                    child: ValueListenableBuilder(
-                        valueListenable: _listItemsValueNotifier,
-                        builder: (context, List<T> items, child) {
-                          return _options != null && _options!.length > 0
-                              ? ListView.builder(
-                                  shrinkWrap: true,
-                                  padding: EdgeInsets.zero,
-                                  itemCount: _options!.length,
-                                  itemBuilder: (context, position) {
-                                    T item = _options![position];
-                                    Function() onTap = () {
-                                      _listItemFocusedPosition = position;
-                                      _searchTextController.value =
-                                          TextEditingValue(text: "");
-                                      _removeOverlay();
-                                      _setValue();
-                                    };
-                                    ListTile listTile = widget.dropdownItemFn(
-                                      item,
-                                      position,
-                                      position == _listItemFocusedPosition,
-                                      (widget.selectedFn ?? _selectedFn)(
-                                          _selectedItem, item),
-                                      onTap,
-                                    );
+          child: Theme(
+            data: ThemeData(),
+            child: Material(
+              borderRadius: widget.borderRadius,
+              elevation: widget.elevation,
+              clipBehavior: Clip.antiAliasWithSaveLayer,
+              child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 5),
+                  height: widget.dropdownHeight ?? 240,
+                  color: widget.dropdownColor ?? Colors.white70,
+                  child: ValueListenableBuilder(
+                      valueListenable: _listItemsValueNotifier,
+                      builder: (context, List<T> items, child) {
+                        return _options != null && _options!.length > 0
+                            ? ListView.builder(
+                                shrinkWrap: true,
+                                padding: EdgeInsets.zero,
+                                itemCount: _options!.length,
+                                itemBuilder: (context, position) {
+                                  T item = _options![position];
+                                  Function() onTap = () {
+                                    _listItemFocusedPosition = position;
+                                    _searchTextController.value =
+                                        TextEditingValue(text: "");
+                                    _removeOverlay();
+                                    _setValue();
+                                  };
+                                  ListTile listTile = widget.dropdownItemFn(
+                                    item,
+                                    position,
+                                    position == _listItemFocusedPosition,
+                                    (widget.selectedFn ?? _selectedFn)(
+                                        _selectedItem, item),
+                                    onTap,
+                                  );
 
-                                    return listTile;
-                                  })
-                              : Container(
-                                  padding: EdgeInsets.all(16),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.max,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        widget.emptyText,
-                                        style: TextStyle(color: Colors.black45),
+                                  return listTile;
+                                })
+                            : Container(
+                                padding: EdgeInsets.all(16),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.max,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      widget.emptyText,
+                                      style: TextStyle(color: Colors.black45),
+                                    ),
+                                    if (widget.onEmptyActionPressed != null)
+                                      TextButton(
+                                        onPressed: () async {
+                                          await widget.onEmptyActionPressed!();
+                                          _search(
+                                              _searchTextController.value.text);
+                                        },
+                                        child: Text(widget.emptyActionText),
                                       ),
-                                      if (widget.onEmptyActionPressed != null)
-                                        TextButton(
-                                          onPressed: () async {
-                                            await widget
-                                                .onEmptyActionPressed!();
-                                            _search(_searchTextController
-                                                .value.text);
-                                          },
-                                          child: Text(widget.emptyActionText),
-                                        ),
-                                    ],
-                                  ),
-                                );
-                        })),
-              )),
+                                  ],
+                                ),
+                              );
+                      })),
+            ),
+          ),
         ),
       );
     });
@@ -420,16 +432,16 @@ class DropdownFormFieldState<T> extends State<DropdownFormField>
       widget.onChanged!(_selectedItem);
     }
 
-    setState(() {});
+    // setState(() {});
   }
 
-  _clearValue() {
-    var item;
-    _effectiveController!.value = item;
+  // _clearValue() {
+  //   var item;
+  //   _effectiveController!.value = item;
 
-    if (widget.onChanged != null) {
-      widget.onChanged!(_selectedItem);
-    }
-    _searchTextController.value = TextEditingValue(text: "");
-  }
+  //   if (widget.onChanged != null) {
+  //     widget.onChanged!(_selectedItem);
+  //   }
+  //   _searchTextController.value = TextEditingValue(text: "");
+  // }
 }

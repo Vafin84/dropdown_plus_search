@@ -1,4 +1,4 @@
-import 'package:dropdown_plus/dropdown_plus.dart';
+import 'package:dropdown_plus_search/dropdown_plus_search.dart';
 import 'package:flutter/material.dart';
 
 /// Simple dorpdown whith plain text as a dropdown items.
@@ -6,7 +6,7 @@ class TextDropdownFormField extends StatelessWidget {
   final List<String> options;
   final InputDecoration? decoration;
   final DropdownEditingController<String>? controller;
-  final void Function(String item)? onChanged;
+  final ValueChanged<String?>? onChanged;
   final void Function(String?)? onSaved;
   final String? Function(String?)? validator;
   final bool Function(String item, String str)? filterFn;
