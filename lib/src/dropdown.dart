@@ -29,6 +29,8 @@ class DropdownFormField<T> extends StatefulWidget {
 
   final bool autoFocus;
 
+  final AutovalidateMode? autovalidateMode;
+
   /// It will trigger on user search
   final String Function(T item)? filterFn;
 
@@ -59,7 +61,7 @@ class DropdownFormField<T> extends StatefulWidget {
   final DropdownEditingController<T>? controller;
   final ValueChanged<T?>? onChanged;
   final void Function(T?)? onSaved;
-  final String? Function(T?)? validator;
+  final FormFieldValidator<T>? validator;
 
   /// height of the dropdown overlay, Default: 240
   final double? dropdownHeight;
@@ -98,6 +100,7 @@ class DropdownFormField<T> extends StatefulWidget {
     this.cursorColor = Colors.black,
     this.elevation = 8.0,
     this.borderRadius,
+    this.autovalidateMode = AutovalidateMode.disabled,
   }) : super(key: key);
 
   @override
@@ -180,9 +183,11 @@ class DropdownFormFieldState<T> extends State<DropdownFormField>
           child: FormField(
             validator: (str) {
               if (widget.validator != null) {
-                widget.validator!(_effectiveController!.value);
+                return widget.validator!(_effectiveController!.value);
               }
+              return null;
             },
+            autovalidateMode: widget.autovalidateMode,
             onSaved: (str) {
               if (widget.onSaved != null) {
                 widget.onSaved!(_effectiveController!.value);
@@ -190,10 +195,12 @@ class DropdownFormFieldState<T> extends State<DropdownFormField>
             },
             builder: (state) {
               return InputDecorator(
-                decoration: widget.decoration ??
+                decoration: widget.decoration?.copyWith(
+                        errorText: state.isValid ? null : state.errorText) ??
                     InputDecoration(
                       border: const OutlineInputBorder(),
                       suffixIcon: Icon(Icons.arrow_drop_down),
+                      errorText: state.isValid ? null : state.errorText,
                     ),
                 isEmpty: _isEmpty,
                 isFocused: _isFocused,
