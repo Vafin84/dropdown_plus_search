@@ -39,10 +39,8 @@ class TextDropdownFormField extends StatelessWidget {
         str ?? '',
         style: TextStyle(fontSize: 16),
       ),
-      findFn: findFn ?? (dynamic str) async => options,
-      filterFn: filterFn ??
-          (dynamic item, str) =>
-              item.toLowerCase().indexOf(str.toLowerCase()) >= 0,
+      items: options,
+      filterFn: (dynamic item) => item,
       dropdownItemFn: (dynamic item, position, focused, selected, onTap) =>
           ListTile(
         title: Text(

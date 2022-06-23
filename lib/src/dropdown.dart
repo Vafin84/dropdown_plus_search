@@ -1,8 +1,5 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
 import 'package:flutter/foundation.dart';
 
 class DropdownEditingController<T> extends ChangeNotifier {
@@ -22,6 +19,8 @@ class DropdownEditingController<T> extends ChangeNotifier {
 
 /// Create a dropdown form field
 class DropdownFormField<T> extends StatefulWidget {
+  final List<T> items;
+
   final double elevation;
 
   final BorderRadius? borderRadius;
@@ -31,14 +30,10 @@ class DropdownFormField<T> extends StatefulWidget {
   final bool autoFocus;
 
   /// It will trigger on user search
-  final bool Function(T item, String str)? filterFn;
+  final String Function(T item)? filterFn;
 
   /// Check item is selectd
   final bool Function(T? item1, T? item2)? selectedFn;
-
-  /// Return list of items what need to list for dropdown.
-  /// The list may be offline, or remote data from server.
-  final Future<List<T>> Function(String str) findFn;
 
   /// Build dropdown Items, it get called for all dropdown items
   ///  [item] = [dynamic value] List item to build dropdown Listtile
@@ -48,7 +43,7 @@ class DropdownFormField<T> extends StatefulWidget {
   /// [onTap] = [Function] *important! just assign this function to Listtile.onTap  = onTap, incase you missed this,
   /// the click event if the dropdown item will not work.
   ///
-  final ListTile Function(
+  final Widget Function(
     T item,
     int position,
     bool focused,
@@ -85,7 +80,7 @@ class DropdownFormField<T> extends StatefulWidget {
     Key? key,
     required this.dropdownItemFn,
     required this.displayItemFn,
-    required this.findFn,
+    required this.items,
     this.filterFn,
     this.autoFocus = false,
     this.controller,
@@ -138,7 +133,7 @@ class DropdownFormFieldState<T> extends State<DropdownFormField>
   DropdownEditingController<dynamic>? get _effectiveController =>
       widget.controller ?? _controller;
 
-  DropdownFormFieldState() : super() {}
+  DropdownFormFieldState() : super();
 
   @override
   void initState() {
@@ -181,9 +176,6 @@ class DropdownFormFieldState<T> extends State<DropdownFormField>
             setState(() {
               _isFocused = focused;
             });
-          },
-          onKey: (focusNode, event) {
-            return _onKeyPressed(event);
           },
           child: FormField(
             validator: (str) {
@@ -275,7 +267,7 @@ class DropdownFormFieldState<T> extends State<DropdownFormField>
                                     _removeOverlay();
                                     _setValue();
                                   };
-                                  ListTile listTile = widget.dropdownItemFn(
+                                  Widget listTile = widget.dropdownItemFn(
                                     item,
                                     position,
                                     position == _listItemFocusedPosition,
@@ -378,41 +370,13 @@ class DropdownFormFieldState<T> extends State<DropdownFormField>
     });
   }
 
-  _onKeyPressed(RawKeyEvent event) {
-    // print('_onKeyPressed : ${event.character}');
-    if (event.isKeyPressed(LogicalKeyboardKey.enter)) {
-      if (_searchFocusNode.hasFocus) {
-        _toggleOverlay();
-      } else {
-        _toggleOverlay();
-      }
-      return false;
-    } else if (event.isKeyPressed(LogicalKeyboardKey.escape)) {
-      _removeOverlay();
-      return true;
-    } else if (event.isKeyPressed(LogicalKeyboardKey.arrowDown)) {
-      int v = _listItemFocusedPosition;
-      v++;
-      if (v >= _options!.length) v = 0;
-      _listItemFocusedPosition = v;
-      _listItemsValueNotifier.value = List<T>.from(_options ?? []);
-      return true;
-    } else if (event.isKeyPressed(LogicalKeyboardKey.arrowUp)) {
-      int v = _listItemFocusedPosition;
-      v--;
-      if (v < 0) v = _options!.length - 1;
-      _listItemFocusedPosition = v;
-      _listItemsValueNotifier.value = List<T>.from(_options ?? []);
-      return true;
-    }
-    return false;
-  }
-
   _search(String str) async {
-    List<T> items = await widget.findFn(str) as List<T>;
-
+    List<T> items = [...widget.items];
     if (str.isNotEmpty && widget.filterFn != null) {
-      items = items.where((item) => widget.filterFn!(item, str)).toList();
+      items = items
+          .where((item) =>
+              widget.filterFn!(item).toLowerCase().contains(str.toLowerCase()))
+          .toList();
     }
 
     _options = items;
