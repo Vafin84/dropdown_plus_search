@@ -48,6 +48,13 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           children: <Widget>[
             DropdownFormField<UserModel>(
+              validator: ((UserModel? value) {
+                if (value?.name == null) {
+                  return "the text field is empty";
+                }
+                return null;
+              }),
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               controller: DropdownEditingController(value: users[2]),
               borderRadius: BorderRadius.circular(10),
               elevation: 16,
@@ -61,21 +68,20 @@ class _MyHomePageState extends State<MyHomePage> {
                     EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                 constraints: BoxConstraints(maxWidth: 680),
               ),
-              onChanged: (dynamic newValue) {
+              onChanged: (UserModel? newValue) {
                 setState(() {
                   // _setting.tarirovka = newValue!.id;
                 });
               },
-              // validator: (dynamic str) {},
-              displayItemFn: (dynamic item) => Text(item?.name ?? ''),
+              displayItemFn: (UserModel? item) => Text(item?.name ?? ''),
               items: users,
-              filterFn: (dynamic item) => item.name,
-              dropdownItemFn: (dynamic item, int position, bool focused,
+              filterFn: (UserModel? item) => item?.name ?? "",
+              dropdownItemFn: (UserModel item, int position, bool focused,
                       bool selected, Function() onTap) =>
                   ListTile(
                 dense: true,
                 visualDensity: const VisualDensity(vertical: -4),
-                title: Text(item.name ?? ""),
+                title: Text(item.name),
                 onTap: onTap,
               ),
             ),

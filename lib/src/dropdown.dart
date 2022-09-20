@@ -104,10 +104,10 @@ class DropdownFormField<T> extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  DropdownFormFieldState createState() => DropdownFormFieldState<T>();
+  DropdownFormFieldState<T> createState() => DropdownFormFieldState<T>();
 }
 
-class DropdownFormFieldState<T> extends State<DropdownFormField>
+class DropdownFormFieldState<T> extends State<DropdownFormField<T>>
     with SingleTickerProviderStateMixin {
   final FocusNode _widgetFocusNode = FocusNode();
   final FocusNode _searchFocusNode = FocusNode();
@@ -369,7 +369,6 @@ class DropdownFormFieldState<T> extends State<DropdownFormField>
   _onTextChanged(String? str) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
-      // print("_onChanged: $_lastSearchString = $str");
       if (_lastSearchString != str) {
         _lastSearchString = str;
         _search(str ?? "");
@@ -385,34 +384,20 @@ class DropdownFormFieldState<T> extends State<DropdownFormField>
               widget.filterFn!(item).toLowerCase().contains(str.toLowerCase()))
           .toList();
     }
-
     _options = items;
-
     _listItemsValueNotifier.value = items;
-
-    // print('_search ${_options!.length}');
   }
 
   _setValue() {
-    var item = _options![_listItemFocusedPosition];
-    _selectedItem = item;
+    if (_options != null && _options!.isNotEmpty) {
+      var item = _options![_listItemFocusedPosition];
+      _selectedItem = item;
 
-    _effectiveController!.value = _selectedItem;
+      _effectiveController!.value = _selectedItem;
+    }
 
     if (widget.onChanged != null) {
       widget.onChanged!(_selectedItem);
     }
-
-    // setState(() {});
   }
-
-  // _clearValue() {
-  //   var item;
-  //   _effectiveController!.value = item;
-
-  //   if (widget.onChanged != null) {
-  //     widget.onChanged!(_selectedItem);
-  //   }
-  //   _searchTextController.value = TextEditingValue(text: "");
-  // }
 }
