@@ -64,7 +64,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 errorStyle: TextStyle(height: 0.5),
                 border: OutlineInputBorder(),
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                 constraints: BoxConstraints(maxWidth: 680),
               ),
               onChanged: (UserModel? newValue) {
@@ -75,7 +76,10 @@ class _MyHomePageState extends State<MyHomePage> {
               displayItemFn: (UserModel? item) => Text(item?.name ?? ''),
               items: users,
               filterFn: (UserModel? item) => item?.name ?? "",
-              dropdownItemFn: (UserModel item, int position, bool focused, bool selected, Function() onTap) => ListTile(
+              dropdownItemFn: (UserModel item, int position, bool focused,
+                      bool selected, Function() onTap) =>
+                  ListTile(
+                selected: selected,
                 dense: true,
                 visualDensity: const VisualDensity(vertical: -4),
                 title: Text(item.name),

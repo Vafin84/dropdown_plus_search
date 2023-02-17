@@ -107,15 +107,19 @@ class DropdownFormField<T> extends StatefulWidget {
   DropdownFormFieldState<T> createState() => DropdownFormFieldState<T>();
 }
 
-class DropdownFormFieldState<T> extends State<DropdownFormField<T>> with SingleTickerProviderStateMixin {
+class DropdownFormFieldState<T> extends State<DropdownFormField<T>>
+    with SingleTickerProviderStateMixin {
   final FocusNode _widgetFocusNode = FocusNode();
   final FocusNode _searchFocusNode = FocusNode();
   final LayerLink _layerLink = LayerLink();
-  final ValueNotifier<List<T>> _listItemsValueNotifier = ValueNotifier<List<T>>([]);
+  final ValueNotifier<List<T>> _listItemsValueNotifier =
+      ValueNotifier<List<T>>([]);
   final TextEditingController _searchTextController = TextEditingController();
-  final DropdownEditingController<T>? _controller = DropdownEditingController<T>();
+  final DropdownEditingController<T>? _controller =
+      DropdownEditingController<T>();
 
-  final Function(T?, T?) _selectedFn = (dynamic item1, dynamic item2) => item1 == item2;
+  final Function(T?, T?) _selectedFn =
+      (dynamic item1, dynamic item2) => item1 == item2;
 
   bool get _isEmpty => _selectedItem == null;
   bool _isFocused = false;
@@ -129,7 +133,8 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>> with SingleT
   Timer? _debounce;
   String? _lastSearchString;
 
-  DropdownEditingController<dynamic>? get _effectiveController => widget.controller ?? _controller;
+  DropdownEditingController<dynamic>? get _effectiveController =>
+      widget.controller ?? _controller;
 
   DropdownFormFieldState() : super();
 
@@ -155,7 +160,7 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>> with SingleT
 
   @override
   Widget build(BuildContext context) {
-    print("_overlayEntry : $_overlayEntry");
+    // print("_overlayEntry : $_overlayEntry");
 
     _displayItem = widget.displayItemFn(_selectedItem);
 
@@ -189,7 +194,8 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>> with SingleT
             },
             builder: (state) {
               return InputDecorator(
-                decoration: widget.decoration?.copyWith(errorText: state.isValid ? null : state.errorText) ??
+                decoration: widget.decoration?.copyWith(
+                        errorText: state.isValid ? null : state.errorText) ??
                     InputDecoration(
                       border: const OutlineInputBorder(),
                       suffixIcon: Icon(Icons.arrow_drop_down),
@@ -211,9 +217,11 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>> with SingleT
                           _onTextChanged(str);
                         },
                         onSubmitted: (str) {
-                          _searchTextController.value = TextEditingValue(text: "");
+                          // _searchTextController.value =
+                          //     TextEditingValue(text: "");
                           _setValue();
-                          // _removeOverlay();
+                          _overlayEntry!.remove();
+                          _overlayEntry = null;
                           _widgetFocusNode.nextFocus();
                         },
                         onEditingComplete: () {},
@@ -261,7 +269,8 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>> with SingleT
                                   T item = _options![position];
                                   Function() onTap = () {
                                     _listItemFocusedPosition = position;
-                                    _searchTextController.value = TextEditingValue(text: "");
+                                    _searchTextController.value =
+                                        TextEditingValue(text: "");
                                     _setValue();
 
                                     _overlayEntry!.remove();
@@ -271,7 +280,8 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>> with SingleT
                                     item,
                                     position,
                                     position == _listItemFocusedPosition,
-                                    (widget.selectedFn ?? _selectedFn)(_selectedItem, item),
+                                    (widget.selectedFn ?? _selectedFn)(
+                                        _selectedItem, item),
                                     onTap,
                                   );
 
@@ -292,7 +302,8 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>> with SingleT
                                       TextButton(
                                         onPressed: () async {
                                           await widget.onEmptyActionPressed!();
-                                          _search(_searchTextController.value.text);
+                                          _search(
+                                              _searchTextController.value.text);
                                         },
                                         child: Text(widget.emptyActionText),
                                       ),
@@ -323,7 +334,7 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>> with SingleT
             )));
   }
 
-  _addOverlay() {
+  void _addOverlay() {
     if (_overlayEntry == null) {
       _search("");
       _overlayBackdropEntry = _createBackdropOverlay();
@@ -340,7 +351,7 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>> with SingleT
   }
 
   /// Dettach overlay from the dropdown widget
-  _removeOverlay() {
+  void _removeOverlay() {
     Future.delayed(Duration(milliseconds: 200), () {
       if (_overlayEntry != null) {
         _overlayEntry!.remove();
@@ -356,14 +367,14 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>> with SingleT
     });
   }
 
-  _toggleOverlay() {
+  void _toggleOverlay() {
     if (_overlayEntry == null) {
       _addOverlay();
     } else
       _removeOverlay();
   }
 
-  _onTextChanged(String? str) {
+  void _onTextChanged(String? str) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
       if (_lastSearchString != str) {
@@ -373,16 +384,22 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>> with SingleT
     });
   }
 
-  _search(String str) async {
+  void _search(String str) async {
     List<T> items = [...widget.items];
     if (str.isNotEmpty && widget.filterFn != null) {
-      items = items.where((item) => widget.filterFn!(item).toLowerCase().contains(str.toLowerCase())).toList();
+      setState(() {
+        _listItemFocusedPosition = 0;
+      });
+      items = items
+          .where((item) =>
+              widget.filterFn!(item).toLowerCase().contains(str.toLowerCase()))
+          .toList();
     }
     _options = items;
     _listItemsValueNotifier.value = items;
   }
 
-  _setValue() {
+  void _setValue() {
     if (_options != null && _options!.isNotEmpty) {
       var item = _options![_listItemFocusedPosition];
       _selectedItem = item;
