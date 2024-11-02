@@ -1,6 +1,6 @@
 name: dropdown_plus_search
 description: Simple and easy to use Dropdown in forms with search, keyboard navigation, offiline data source, remote data source and easy customization.
-version: 1.0.2
+version: 1.0.3
 homepage: https://crawlink.com
 git: https://github.com/crawlinknetworks/dropdown_plus
 repository: https://github.com/crawlinknetworks/dropdown_plus
@@ -23,6 +23,8 @@ dev_dependencies:
 
 # The following section is specific to Flutter.
 flutter:
+  uses-material-design: true
+  #
   # To add assets to your package, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

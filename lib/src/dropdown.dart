@@ -25,7 +25,7 @@ class DropdownFormField<T> extends StatefulWidget {
 
   final BorderRadius? borderRadius;
 
-  final Color cursorColor;
+  final Color? cursorColor;
 
   final bool autoFocus;
 
@@ -45,13 +45,7 @@ class DropdownFormField<T> extends StatefulWidget {
   /// [onTap] = [Function] *important! just assign this function to Listtile.onTap  = onTap, incase you missed this,
   /// the click event if the dropdown item will not work.
   ///
-  final Widget Function(
-    T item,
-    int position,
-    bool focused,
-    bool selected,
-    Function() onTap,
-  ) dropdownItemFn;
+  final Widget Function(T item, int position, bool focused, bool selected, void Function() onTap) dropdownItemFn;
 
   /// Build widget to display selected item inside Form Field
   final Widget Function(T? item) displayItemFn;
@@ -92,12 +86,12 @@ class DropdownFormField<T> extends StatefulWidget {
     this.onChanged,
     this.onSaved,
     this.dropdownHeight,
-    this.searchTextStyle = const TextStyle(fontSize: 14, color: Colors.black),
+    this.searchTextStyle,
     this.emptyText = "No matching found!",
     this.emptyActionText = 'Create new',
     this.onEmptyActionPressed,
     this.selectedFn,
-    this.cursorColor = Colors.black,
+    this.cursorColor,
     this.elevation = 8.0,
     this.borderRadius,
     this.autovalidateMode = AutovalidateMode.disabled,
@@ -107,20 +101,14 @@ class DropdownFormField<T> extends StatefulWidget {
   DropdownFormFieldState<T> createState() => DropdownFormFieldState<T>();
 }
 
-class DropdownFormFieldState<T> extends State<DropdownFormField<T>>
-    with SingleTickerProviderStateMixin {
+class DropdownFormFieldState<T> extends State<DropdownFormField<T>> with SingleTickerProviderStateMixin {
   final FocusNode _widgetFocusNode = FocusNode();
   final FocusNode _searchFocusNode = FocusNode();
   final LayerLink _layerLink = LayerLink();
-  final ValueNotifier<List<T>> _listItemsValueNotifier =
-      ValueNotifier<List<T>>([]);
+  final ValueNotifier<List<T>> _listItemsValueNotifier = ValueNotifier<List<T>>([]);
   final TextEditingController _searchTextController = TextEditingController();
-  final DropdownEditingController<T>? _controller =
-      DropdownEditingController<T>();
-
-  final Function(T?, T?) _selectedFn =
-      (dynamic item1, dynamic item2) => item1 == item2;
-
+  final DropdownEditingController<T>? _controller = DropdownEditingController<T>();
+  final bool Function(T?, T?) _selectedFn = (T? item1, T? item2) => item1 == item2;
   bool get _isEmpty => _selectedItem == null;
   bool _isFocused = false;
 
@@ -133,8 +121,7 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>>
   Timer? _debounce;
   String? _lastSearchString;
 
-  DropdownEditingController<dynamic>? get _effectiveController =>
-      widget.controller ?? _controller;
+  DropdownEditingController<dynamic>? get _effectiveController => widget.controller ?? _controller;
 
   DropdownFormFieldState() : super();
 
@@ -163,7 +150,7 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>>
     // print("_overlayEntry : $_overlayEntry");
 
     _displayItem = widget.displayItemFn(_selectedItem);
-
+    final theme = Theme.of(context);
     return CompositedTransformTarget(
       link: this._layerLink,
       child: GestureDetector(
@@ -194,8 +181,7 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>>
             },
             builder: (state) {
               return InputDecorator(
-                decoration: widget.decoration?.copyWith(
-                        errorText: state.isValid ? null : state.errorText) ??
+                decoration: widget.decoration?.copyWith(errorText: state.isValid ? null : state.errorText) ??
                     InputDecoration(
                       border: const OutlineInputBorder(),
                       suffixIcon: Icon(Icons.arrow_drop_down),
@@ -205,9 +191,9 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>>
                 isFocused: _isFocused,
                 child: this._overlayEntry != null
                     ? EditableText(
-                        style: widget.searchTextStyle!,
+                        style: widget.searchTextStyle ?? theme.textTheme.bodyMedium!,
                         controller: _searchTextController,
-                        cursorColor: widget.cursorColor,
+                        cursorColor: widget.cursorColor ?? theme.colorScheme.primary,
                         focusNode: _searchFocusNode,
                         backgroundCursorColor: Colors.transparent,
                         onChanged: (str) {
@@ -237,9 +223,7 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>>
 
   OverlayEntry _createOverlayEntry() {
     final renderObject = context.findRenderObject() as RenderBox;
-    // print(renderObject);
     final Size size = renderObject.size;
-
     var overlay = OverlayEntry(builder: (context) {
       return Positioned(
         width: size.width,
@@ -247,71 +231,62 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>>
           link: this._layerLink,
           showWhenUnlinked: false,
           offset: Offset(0.0, size.height + 3.0),
-          child: Theme(
-            data: ThemeData(),
-            child: Material(
-              borderRadius: widget.borderRadius,
-              elevation: widget.elevation,
-              clipBehavior: Clip.antiAliasWithSaveLayer,
-              child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 5),
-                  height: widget.dropdownHeight ?? 240,
-                  color: widget.dropdownColor ?? Colors.white70,
-                  child: ValueListenableBuilder(
-                      valueListenable: _listItemsValueNotifier,
-                      builder: (context, List<T> items, child) {
-                        return _options != null && _options!.length > 0
-                            ? ListView.builder(
-                                shrinkWrap: true,
-                                padding: EdgeInsets.zero,
-                                itemCount: _options!.length,
-                                itemBuilder: (context, position) {
-                                  T item = _options![position];
-                                  Function() onTap = () {
-                                    _listItemFocusedPosition = position;
-                                    _searchTextController.value =
-                                        TextEditingValue(text: "");
-                                    _setValue();
+          child: Material(
+            color: widget.dropdownColor,
+            borderRadius: widget.borderRadius,
+            elevation: widget.elevation,
+            clipBehavior: Clip.antiAliasWithSaveLayer,
+            child: SizedBox(
+                height: widget.dropdownHeight ?? 240,
+                child: ValueListenableBuilder(
+                    valueListenable: _listItemsValueNotifier,
+                    builder: (context, List<T> items, child) {
+                      return _options != null && _options!.length > 0
+                          ? ListView.builder(
+                              // shrinkWrap: true,
+                              padding: EdgeInsets.zero,
+                              itemCount: _options!.length,
+                              itemBuilder: (context, position) {
+                                T item = _options![position];
+                                void Function() onTap = () {
+                                  _listItemFocusedPosition = position;
+                                  _searchTextController.clear();
+                                  _setValue();
+                                  _overlayEntry!.remove();
+                                  _overlayEntry = null;
+                                };
+                                Widget listTile = widget.dropdownItemFn(
+                                  item,
+                                  position,
+                                  position == _listItemFocusedPosition,
+                                  (widget.selectedFn ?? _selectedFn)(_selectedItem, item),
+                                  onTap,
+                                );
 
-                                    _overlayEntry!.remove();
-                                    _overlayEntry = null;
-                                  };
-                                  Widget listTile = widget.dropdownItemFn(
-                                    item,
-                                    position,
-                                    position == _listItemFocusedPosition,
-                                    (widget.selectedFn ?? _selectedFn)(
-                                        _selectedItem, item),
-                                    onTap,
-                                  );
-
-                                  return listTile;
-                                })
-                            : Container(
-                                padding: EdgeInsets.all(16),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.max,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      widget.emptyText,
-                                      style: TextStyle(color: Colors.black45),
+                                return listTile;
+                              })
+                          : Container(
+                              padding: EdgeInsets.all(16),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.max,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    widget.emptyText,
+                                  ),
+                                  if (widget.onEmptyActionPressed != null)
+                                    TextButton(
+                                      onPressed: () async {
+                                        await widget.onEmptyActionPressed!();
+                                        _search(_searchTextController.value.text);
+                                      },
+                                      child: Text(widget.emptyActionText),
                                     ),
-                                    if (widget.onEmptyActionPressed != null)
-                                      TextButton(
-                                        onPressed: () async {
-                                          await widget.onEmptyActionPressed!();
-                                          _search(
-                                              _searchTextController.value.text);
-                                        },
-                                        child: Text(widget.emptyActionText),
-                                      ),
-                                  ],
-                                ),
-                              );
-                      })),
-            ),
+                                ],
+                              ),
+                            );
+                    })),
           ),
         ),
       );
@@ -351,20 +326,19 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>>
   }
 
   /// Dettach overlay from the dropdown widget
-  void _removeOverlay() {
-    Future.delayed(Duration(milliseconds: 200), () {
-      if (_overlayEntry != null) {
-        _overlayEntry!.remove();
-        _overlayEntry = null;
-      }
-      if (_overlayBackdropEntry != null) {
-        _overlayBackdropEntry!.remove();
-        _overlayBackdropEntry = null;
-      }
-    }).whenComplete(() {
-      _searchTextController.value = TextEditingValue.empty;
-      setState(() {});
-    });
+  void _removeOverlay() async {
+    await Future.delayed(Duration(milliseconds: 200));
+    if (_overlayEntry != null) {
+      _overlayEntry!.remove();
+      _overlayEntry = null;
+    }
+    if (_overlayBackdropEntry != null) {
+      _overlayBackdropEntry!.remove();
+      _overlayBackdropEntry = null;
+    }
+    _searchTextController.value = TextEditingValue.empty;
+    await Future.delayed(Duration(milliseconds: 100));
+    setState(() {});
   }
 
   void _toggleOverlay() {
@@ -390,10 +364,7 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>>
       setState(() {
         _listItemFocusedPosition = 0;
       });
-      items = items
-          .where((item) =>
-              widget.filterFn!(item).toLowerCase().contains(str.toLowerCase()))
-          .toList();
+      items = items.where((item) => widget.filterFn!(item).toLowerCase().contains(str.toLowerCase())).toList();
     }
     _options = items;
     _listItemsValueNotifier.value = items;
@@ -403,7 +374,6 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>>
     if (_options != null && _options!.isNotEmpty) {
       var item = _options![_listItemFocusedPosition];
       _selectedItem = item;
-
       _effectiveController!.value = _selectedItem;
     }
 

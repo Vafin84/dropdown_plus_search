@@ -1,17 +1,7 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:flutter/foundation.dart';
+class UserModel {
+  final int id;
+  final String name;
+  final int age;
 
-part 'user_model.freezed.dart';
-part 'user_model.g.dart';
-
-@freezed
-class UserModel with _$UserModel {
-  const factory UserModel({
-    required int id,
-    required String name,
-    required int age,
-  }) = _UserModel;
-
-  factory UserModel.fromJson(Map<String, Object?> json) =>
-      _$UserModelFromJson(json);
+  const UserModel({required this.id, required this.name, required this.age});
 }
