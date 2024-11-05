@@ -370,7 +370,7 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>> with SingleT
     _listItemsValueNotifier.value = items;
   }
 
-  void _setValue() {
+  void _setValue() async {
     if (_options != null && _options!.isNotEmpty) {
       var item = _options![_listItemFocusedPosition];
       _selectedItem = item;
@@ -378,6 +378,7 @@ class DropdownFormFieldState<T> extends State<DropdownFormField<T>> with SingleT
     }
 
     if (widget.onChanged != null) {
+      await Future.delayed(Duration(milliseconds: 200));
       widget.onChanged!(_selectedItem);
     }
   }
